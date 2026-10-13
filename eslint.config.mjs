@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // VAD 자산 (npm install 때 복사되는 외부 파일)
+    "public/vad/**",
   ]),
 ]);
 
