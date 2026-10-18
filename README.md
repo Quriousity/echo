@@ -1,20 +1,20 @@
 # ECHO
 
-노트북 한 대를 회의 자리에 놓고, 한국어·영어·중국어가 오가는 대화를 **3분할 화면에 동시에 쌓아 주는** 개인용 실시간 통역 도구. (화면 문구는 영어)
+노트북 한 대를 회의 자리에 놓고, 한국어·영어·중국어·일본어가 오가는 대화를 **고른 언어 수만큼 나눈 화면에 나란히 쌓아 주는** 개인용 통역 도구. (화면 문구는 영어)
 
 ```
 ┌──────────────┬──────────────┬──────────────┐
-│ Korean       │ English      │ Chinese      │
+│ Korean       │ English      │ Japanese     │  ← 보여 줄 언어는 직접 고르고 끌어서 순서 변경
 ├──────────────┼──────────────┼──────────────┤
-│🎤 안녕하세요…  │ Hello…       │ 你好…         │  ← 같은 발화는 같은 줄
-│ 가격은…       │🎤 The price… │ 价格…         │  ← 🎤 = 원문 칸
+│🎤 안녕하세요…  │ Hello…       │ こんにちは…   │  ← 한 묶음 = 한 줄
+│ 가격은…       │⌨ The price…  │ 価格は…      │  ← 🎤/⌨ = 원문 칸
 └──────────────┴──────────────┴──────────────┘
 ```
 
 ## 실행
 
 ```bash
-npm install          # postinstall 이 VAD 모델·WASM 을 public/vad 로 복사
+npm install
 cp .env.example .env.local   # OPENAI_API_KEY 채우기
 npm run dev          # http://localhost:3000
 ```
@@ -25,38 +25,51 @@ Chrome / Edge 에서 열고 마이크를 허용한다. 오래 쓸 때는 `npm ru
 
 | 조작 | 키 |
 |---|---|
-| 녹음 시작 / 정지 | `Space` 또는 Start recording 버튼 |
-| 언어 지정: 자동 / 한국어 / 영어 / 중국어 | `0` `1` `2` `3` (자동 감지가 짧은 말에서 틀릴 때) |
+| 보여 줄 언어 고르기 | 첫 화면에서 선택 → 열 머리의 **+ KO** 등으로 추가, **×** 로 빼기 |
+| 열 순서 바꾸기 | 열 머리의 언어 칩을 좌우로 끌기 |
+| 문장 한 묶음 번역 | 하단 입력창에 쓰고 `Enter` (`Shift+Enter` 줄바꿈) |
+| 음성 한 묶음 번역 | **Speak** 로 시작 → **End** 로 끝 (입력창 밖에서 `Space`) |
+| 원문 언어: 자동 / 한 / 영 / 중 / 일 | 하단 왼쪽, 또는 `0`~`4` |
 | 글자 크기 | A− / A+ |
-| 이 줄만 Sol 로 다시 번역 | 줄에 마우스 → **Refine** |
+| 테마: 자동 / 라이트 / 다크 | 상단 ◐ 버튼 |
+| 이 줄만 Sol 로 다시 번역 (나중에 추가한 칸도 채움) | 줄에 마우스 → **Refine** |
 | 실패한 줄 다시 처리 | **Retry** |
 | 기록 내보내기 | Export → md / txt / srt |
-| 용어집 · 번역 모델 · VAD 조정 | ⚙ Settings |
+| 용어집 · 번역 모델 | ⚙ Settings |
 
 - 기록은 브라우저(IndexedDB)에 자동 저장 — 새로고침해도 남는다. New session 을 누르면 이전 기록은 보관하고 새로 시작.
 - 녹음 중에는 화면이 꺼지지 않는다(Wake Lock).
+
+## 중국어·일본어 입력기 추가
+
+입력창에 중국어·일본어를 직접 치려면 OS 입력기를 추가한다 (말로 하는 건 입력기 없이 된다).
+
+- **macOS**: 시스템 설정 → 키보드 → 텍스트 입력 → 편집 → `+` → 중국어(간체) **병음 – 간체** / 일본어 **로마자** 입력. 전환은 `Ctrl+Space` 또는 🌐 키.
+- **Windows 11**: 설정 → 시간 및 언어 → 언어 및 지역 → 언어 추가 → **中文(简体)** / **日本語** (음성·필기 등 선택 기능은 꺼도 됨). 전환은 `Win+Space`.
+- 중국어는 병음(`nihao` → Space), 일본어는 로마자(`konnichiha` → Space 로 변환 → Enter)로 친다. 조합 중의 Enter 는 글자 확정이라 전송되지 않는다.
 
 ## 구성
 
 | 항목 | 선택 |
 |---|---|
 | 런타임 / 프레임워크 | Node.js 24 LTS · Next.js 16.4 (Active LTS) · React 19 · Tailwind 4 |
-| 음성 구간 감지 | `@ricky0123/vad-web` (Silero v5) — `lib/useVad.ts` 의 얇은 훅으로 사용 |
-| 전사 | OpenAI `gpt-transcribe` — `languages: [ko, en, zh]`, 용어집을 `keywords` 로, 직전 문장을 `prompt` 로 |
-| 번역 | OpenAI `gpt-6-luna` (기본, `reasoning.effort: none`) · Refine 은 `gpt-6-sol` — JSON 스키마로 `{source, ko, en, zh}` |
+| 녹음 | 브라우저 `MediaRecorder` (webm/opus, Safari 는 mp4) — 시작~끝을 한 묶음으로 |
+| 전사 | OpenAI `gpt-transcribe` — `languages: [ko, en, zh, ja]`, 용어집을 `keywords` 로, 직전 문장을 `prompt` 로 |
+| 번역 | OpenAI `gpt-6-luna` (기본, `reasoning.effort: none`) · Refine 은 `gpt-6-sol` — 화면에 띄운 언어만 JSON 스키마로 |
 | 저장 | zustand + IndexedDB(idb-keyval) |
 
 ```
-app/api/transcribe   음성 조각(WAV) → 원문 (+무음 환각 문장 제거)
-app/api/translate    원문 → 원문 언어 + 3개 언어
+app/api/transcribe   음성 한 묶음 → 원문 (+무음 환각 문장 제거)
+app/api/translate    원문 → 원문 언어 + 화면에 띄운 언어들
 app/api/health       API 키 설정 여부
-components/          EchoApp(상단바) · Recorder(VAD) · TriColumn(3분할) · SettingsPanel
-lib/                 pipeline(큐·재시도) · store · export · useVad · server/(OpenAI, 정리)
+components/          EchoApp(상단바) · LangColumns(분할 화면) · Composer(하단 입력바) · Recorder · SettingsPanel · ThemeToggle
+lib/                 pipeline(큐·재시도) · store · export · server/(OpenAI, 정리)
+app/globals.css      색상 프로필 (라이트·다크 토큰)
 ```
 
 ## 개발용 시험
 
-마이크 없이 WAV 파일로 전체 흐름을 시험할 수 있다 (`npm run dev` 일 때만):
+마이크 없이 오디오 파일로 전체 흐름을 시험할 수 있다 (`npm run dev` 일 때만):
 `public/__test__/sample.wav` 를 두고 브라우저 콘솔에서 `__echoTest("/__test__/sample.wav")`.
 (16kHz 16bit 모노 WAV 기준. `public/__test__/` 는 git 제외)
 

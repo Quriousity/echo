@@ -42,5 +42,4 @@ yarn-error.log*
 next-env.d.ts
 
 # VAD 자산 (npm install 때 자동 복사)
-/public/vad/
 /public/__test__/

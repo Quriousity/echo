@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { get as idbGet, set as idbSet } from "idb-keyval";
 import { DEFAULT_SETTINGS } from "./settings";
-import type { Lang, Row, Settings } from "./types";
+import { LANGS, type Lang, type Row, type Settings } from "./types";
 
 const SETTINGS_KEY = "echo:settings";
 const CURRENT_KEY = "echo:current-session";
@@ -14,8 +14,7 @@ type State = {
   session: Session;
   rows: Row[];
   settings: Settings;
-  langHint: Lang | null; // 수동 언어 지정 (단축키 0~3)
-  speaker: number | null; // 현재 화자 (단축키 Q W E R)
+  langHint: Lang | null; // 수동 언어 지정 (단축키 0~4)
   listening: boolean;
   hasKey: boolean | null;
   hydrated: boolean;
@@ -26,7 +25,6 @@ type State = {
   newSession: () => void;
   setSettings: (patch: Partial<Settings>) => void;
   setLangHint: (lang: Lang | null) => void;
-  setSpeaker: (speaker: number | null) => void;
   setListening: (v: boolean) => void;
   setHasKey: (v: boolean) => void;
 };
@@ -38,7 +36,6 @@ export const useEcho = create<State>((set, get) => ({
   rows: [],
   settings: DEFAULT_SETTINGS,
   langHint: null,
-  speaker: null,
   listening: false,
   hasKey: null,
   hydrated: false,
@@ -48,26 +45,21 @@ export const useEcho = create<State>((set, get) => ({
     try {
       const saved = localStorage.getItem(SETTINGS_KEY);
       if (saved) {
-        const s = JSON.parse(saved) as Partial<Settings>;
-        set({
-          settings: {
-            ...DEFAULT_SETTINGS,
-            ...s,
-            vad: { ...DEFAULT_SETTINGS.vad, ...s.vad },
-            speakers: DEFAULT_SETTINGS.speakers.map((d, i) => s.speakers?.[i] ?? d),
-          },
-        });
+        // 예전 버전에 있던 항목(VAD·화자)은 버리고 지금 쓰는 것만 꺼낸다
+        const { columns, translateModel, effort, glossary, fontSize } = { ...DEFAULT_SETTINGS, ...(JSON.parse(saved) as Partial<Settings>) };
+        set({ settings: { columns: [...new Set(columns)].filter((l) => LANGS.includes(l)), translateModel, effort, glossary, fontSize } });
       }
     } catch {}
     try {
       const current = await idbGet<{ session: Session; rows: Row[] }>(CURRENT_KEY);
       if (current) {
         // 새로고침 순간 처리 중이던 줄은 오디오가 사라졌으므로 멈춘 상태로 표시
-        const rows = current.rows.map((r): Row =>
-          r.status === "transcribing" || r.status === "translating" || r.refining
-            ? { ...r, refining: false, status: r.original ? "error" : "empty", error: "Interrupted by page reload" }
-            : r,
-        );
+        const rows = current.rows.map((r): Row => {
+          const row = { ...r, input: r.input ?? "voice" };
+          return row.status === "transcribing" || row.status === "translating" || row.refining
+            ? { ...row, refining: false, status: row.original ? "error" : "empty", error: "Interrupted by page reload" }
+            : row;
+        });
         set({ session: current.session, rows });
       }
     } catch {}
@@ -100,7 +92,6 @@ export const useEcho = create<State>((set, get) => ({
   },
 
   setLangHint: (langHint) => set({ langHint }),
-  setSpeaker: (speaker) => set({ speaker }),
   setListening: (listening) => set({ listening }),
   setHasKey: (hasKey) => set({ hasKey }),
 }));
