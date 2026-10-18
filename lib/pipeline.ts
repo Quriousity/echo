@@ -97,7 +97,7 @@ async function transcribeRow(seq: number) {
       audio.delete(seq);
       return;
     }
-    const guess = guessLang(res.languages, row.langHint);
+    const guess = guessLang(res.text, res.languages, row.langHint);
     audio.delete(seq);
     // 추임새만 있는 줄은 번역하지 않고 원문만 회색 한 줄로 남긴다
     if (res.filler) {
@@ -111,13 +111,13 @@ async function transcribeRow(seq: number) {
       text: guess && guess !== "other" ? { [guess]: res.text } : {},
       sttMs: res.ms,
     });
-    await translateRow(seq, undefined, res.languages);
+    await translateRow(seq);
   } catch (err) {
     updateRow(seq, { status: "error", error: (err as Error).message });
   }
 }
 
-async function translateRow(seq: number, model?: TranslateModel, sttLanguages: string[] = []) {
+async function translateRow(seq: number, model?: TranslateModel) {
   const { updateRow, settings } = useEcho.getState();
   const row = useEcho.getState().rows.find((r) => r.seq === seq);
   if (!row?.original) return;
@@ -126,7 +126,6 @@ async function translateRow(seq: number, model?: TranslateModel, sttLanguages: s
   try {
     const body: TranslateRequest = {
       text: row.original,
-      sttLanguages,
       langHint: row.langHint,
       context: contextBefore(seq),
       glossary: parseGlossary(settings.glossary),
@@ -149,8 +148,14 @@ async function translateRow(seq: number, model?: TranslateModel, sttLanguages: s
   }
 }
 
-function guessLang(detected: string[], hint: Lang | null): Lang | "other" | undefined {
+// 원문 칸 1차 판정 (번역 결과의 source 로 최종 확정).
+// gpt-transcribe 의 languages 는 애매한 음성에서 후보 목록 첫 값(ko)을 그대로 돌려주므로 글자 종류를 먼저 본다.
+function guessLang(text: string, detected: string[], hint: Lang | null): Lang | "other" | undefined {
   if (hint) return hint;
+  if (/\p{Script=Hangul}/u.test(text)) return "ko";
+  if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text)) return "other";
+  if (/\p{Script=Han}/u.test(text)) return "zh";
+  if (/\p{Script=Latin}/u.test(text)) return "en";
   const first = detected.find((c) => LANGS.includes(c as Lang));
   return (first as Lang | undefined) ?? (detected.length ? "other" : undefined);
 }

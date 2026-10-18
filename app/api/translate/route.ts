@@ -41,12 +41,7 @@ export async function POST(request: Request): Promise<Response> {
           .map((c) => `[${c.source}${c.speaker ? ` · ${c.speaker}` : ""}] ${c[c.source as "ko" | "en" | "zh"] ?? c.en ?? ""}`)
           .join("\n")}\n\n`
       : "";
-    const hints = [
-      req.langHint ? `The speaker was marked as speaking "${req.langHint}".` : "",
-      req.sttLanguages.length ? `Speech recognizer detected: ${req.sttLanguages.join(", ")}.` : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const hints = req.langHint ? `The speaker was marked as speaking "${req.langHint}".` : "";
 
     const res = await openai().responses.create({
       model: req.model,

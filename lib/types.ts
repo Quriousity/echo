@@ -54,7 +54,6 @@ export type TranscribeResponse = { text: string; languages: string[]; filler: bo
 
 export type TranslateRequest = {
   text: string;
-  sttLanguages: string[];
   langHint: Lang | null;
   context: ContextItem[];
   glossary: GlossaryEntry[];
