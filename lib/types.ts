@@ -5,6 +5,8 @@ export type Source = Lang | "other";
 
 export type TranslateModel = "gpt-6-luna" | "gpt-6-sol";
 export type Effort = "none" | "low" | "medium";
+// chunk: 사용자가 녹음 시작~끝을 직접 정한다 · live: 듣는 동안 말이 멈출 때마다 알아서 끊어 보낸다
+export type InputMode = "chunk" | "live";
 
 export type RowStatus = "transcribing" | "translating" | "done" | "empty" | "filler" | "error";
 
@@ -34,6 +36,7 @@ export type Settings = {
   effort: Effort;
   glossary: string; // 한 줄에 "한국어 | English | 中文 | 日本語"
   fontSize: number; // px
+  mode: InputMode;
 };
 
 // 서버 API 요청/응답

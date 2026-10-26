@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useEcho } from "@/lib/store";
 import { submitVoice } from "@/lib/pipeline";
+import { useSpaceKey } from "./useSpaceKey";
 
 // 브라우저마다 녹음되는 형식이 달라서 (Safari 는 mp4) 되는 것 중 첫 번째를 쓴다
 const MIME_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -83,16 +84,9 @@ export default function Recorder({ disabled }: { disabled: boolean }) {
   }, [recording]);
 
   // 스페이스바 = 녹음 시작/끝 (입력창에 쓰는 중이면 무시)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const inField = e.target instanceof Element && e.target.closest("input, textarea, select, button");
-      if (e.code !== "Space" || inField || e.repeat) return;
-      e.preventDefault();
-      if (!disabled || recorder.current) toggle();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [toggle, disabled]);
+  useSpaceKey(() => {
+    if (!disabled || recorder.current) toggle();
+  });
 
   return (
     <div className="flex shrink-0 items-center gap-2">

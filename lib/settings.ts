@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   effort: "none",
   glossary: "",
   fontSize: 20,
+  mode: "chunk",
 };
 
 // "에코 | Echo | 回声 | エコー" 한 줄 → { ko, en, zh, ja }. 빈 칸은 생략.

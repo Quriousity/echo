@@ -7,6 +7,7 @@ import { download, toMarkdown, toSrt, toText } from "@/lib/export";
 import LangColumns from "./LangColumns";
 import Composer from "./Composer";
 import Logo from "./Logo";
+import ModeToggle from "./ModeToggle";
 import ThemeToggle from "./ThemeToggle";
 import { PILL, SEGMENT, SEGMENT_OFF } from "./langTheme";
 import SettingsPanel from "./SettingsPanel";
@@ -110,6 +111,7 @@ export default function EchoApp() {
           >
             New session
           </button>
+          <ModeToggle />
           <ThemeToggle />
           <button type="button" onClick={() => setShowSettings(true)} className={PILL}>
             ⚙ Settings

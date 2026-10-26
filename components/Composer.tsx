@@ -9,6 +9,7 @@ import { SEGMENT, SEGMENT_OFF, SEGMENT_ON } from "./langTheme";
 
 // 마이크는 브라우저에서만 동작
 const Recorder = dynamic(() => import("./Recorder"), { ssr: false });
+const LiveRecorder = dynamic(() => import("./LiveRecorder"), { ssr: false });
 
 const HINTS: { key: string; value: Lang | null; label: string }[] = [
   { key: "0", value: null, label: "Auto" },
@@ -19,10 +20,12 @@ const HINTS: { key: string; value: Lang | null; label: string }[] = [
 ];
 
 // 화면 하단 입력바: 원문 언어 선택 + 문장 입력 + 녹음. 입력한 문장 하나, 녹음 시작~끝 하나가 각각 한 묶음(한 줄)이다.
+// 실시간 모드에서는 녹음 버튼 대신 듣기 버튼 — 말이 멈출 때마다 한 묶음.
 export default function Composer() {
   const langHint = useEcho((s) => s.langHint);
   const setLangHint = useEcho((s) => s.setLangHint);
   const noColumns = useEcho((s) => s.settings.columns.length === 0);
+  const live = useEcho((s) => s.settings.mode === "live");
   const [draft, setDraft] = useState("");
 
   // 단축키 0~4 = 원문 언어 지정 (입력창에 쓰는 중이면 무시)
@@ -86,7 +89,7 @@ export default function Composer() {
         >
           Send
         </button>
-        <Recorder disabled={noColumns} />
+        {live ? <LiveRecorder disabled={noColumns} /> : <Recorder disabled={noColumns} />}
       </div>
     </footer>
   );

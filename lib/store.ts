@@ -46,8 +46,8 @@ export const useEcho = create<State>((set, get) => ({
       const saved = localStorage.getItem(SETTINGS_KEY);
       if (saved) {
         // 예전 버전에 있던 항목(VAD·화자)은 버리고 지금 쓰는 것만 꺼낸다
-        const { columns, translateModel, effort, glossary, fontSize } = { ...DEFAULT_SETTINGS, ...(JSON.parse(saved) as Partial<Settings>) };
-        set({ settings: { columns: [...new Set(columns)].filter((l) => LANGS.includes(l)), translateModel, effort, glossary, fontSize } });
+        const { columns, translateModel, effort, glossary, fontSize, mode } = { ...DEFAULT_SETTINGS, ...(JSON.parse(saved) as Partial<Settings>) };
+        set({ settings: { columns: [...new Set(columns)].filter((l) => LANGS.includes(l)), translateModel, effort, glossary, fontSize, mode: mode === "live" ? "live" : "chunk" } });
       }
     } catch {}
     try {
